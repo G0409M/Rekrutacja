@@ -14,6 +14,14 @@ using static Soneta.Ksiega.ZestawienieKS;
 [assembly: Worker(typeof(TemplateWorker2), typeof(Pracownicy))]
 namespace Rekrutacja.Workers.Template
 {
+    public enum Figura
+    {
+        Kwadrat,
+        Prostokat,
+        Trojkat,
+        Kolo
+    }
+
     public class TemplateWorker2
     {
         //Aby parametry działały prawidłowo dziedziczymy po klasie ContextBase
@@ -27,13 +35,13 @@ namespace Rekrutacja.Workers.Template
 
             [Caption("Data obliczeń")]
             public Date DataObliczen { get; set; }
-            [Caption("Operacja")]
-            public string Operacja { get; set; }
+            [Caption("Figura")]
+            public Figura Figura { get; set; }
             public TemplateWorker2Parametry(Context context) : base(context)
             {
                 this.A = 0;
                 this.B = 0;
-                this.Operacja = "+";
+                this.Figura = Figura.Kwadrat;
                 this.DataObliczen = Date.Today;
             }
         }
@@ -46,10 +54,10 @@ namespace Rekrutacja.Workers.Template
         public TemplateWorker2Parametry Parametry { get; set; }
         //Atrybut Action - Wywołuje nam metodę która znajduje się poniżej
         [Action("Kalkulator2",
-           Description = "Prosty kalkulator obliczania pola figury ",
+           Description = "Prosty kalkulator do obliczania pola figury ",
            Priority = 10,
            Mode = ActionMode.ReadOnlySession,
-           Icon = ActionIcon.Accept,
+           Icon = ActionIcon.Diagram,
            Target = ActionTarget.ToolbarWithText)]
 
         public void WykonajAkcje()
@@ -76,7 +84,7 @@ namespace Rekrutacja.Workers.Template
                         var pracownikZSesja = nowaSesja.Get(pracownik);
                         //Features - są to pola rozszerzające obiekty w bazie danych, dzięki czemu nie jestesmy ogarniczeni to kolumn jakie zostały utworzone przez producenta
                         pracownikZSesja.Features["DataObliczen"] = this.Parametry.DataObliczen;
-                        pracownikZSesja.Features["Wynik"] = Oblicz(this.Parametry.A, this.Parametry.B, this.Parametry.Operacja);
+                        pracownikZSesja.Features["Wynik"] = (double)Oblicz(this.Parametry.A, this.Parametry.B, this.Parametry.Figura);
                         //Zatwierdzamy zmiany wykonane w sesji
                         trans.CommitUI();
                     }
@@ -86,20 +94,24 @@ namespace Rekrutacja.Workers.Template
                 nowaSesja.Save();
             }
         }
-        private double Oblicz(double a, double b, string operacja)
+        private int Oblicz(double a, double b, Figura figura)
         {
-            switch (operacja)
+            switch (figura)
             {
-                case "+":
-                    return a + b;
-                case "-":
-                    return a - b;
-                case "*":
-                    return a * b;
-                case "/":
-                    return b != 0 ? a / b : 0;
+                case Figura.Kwadrat:
+                    return (int)(a * a);  
+
+                case Figura.Prostokat:
+                    return (int)(a * b); 
+
+                case Figura.Trojkat:
+                    return (int)(0.5 * a * b);  
+
+                case Figura.Kolo:
+                    return (int)(Math.PI * a * a);  
+
                 default:
-                    throw new InvalidOperationException("Nieprawidłowa operacja");
+                    throw new InvalidOperationException("Nieprawidłowa figura");
             }
         }
     }
